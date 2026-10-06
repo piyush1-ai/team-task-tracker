@@ -1,5 +1,7 @@
 package com.axionix.team_task_tracker.controller;
 
+import com.axionix.team_task_tracker.dto.LoginRequest;
+import com.axionix.team_task_tracker.dto.LoginResponse;
 import com.axionix.team_task_tracker.dto.RegisterRequest;
 import com.axionix.team_task_tracker.dto.UserResponse;
 import com.axionix.team_task_tracker.service.AuthService;
@@ -22,5 +24,9 @@ public class AuthController {
     @PostMapping("/register")
     public ResponseEntity<UserResponse> register(@Valid @RequestBody RegisterRequest req) {
         return ResponseEntity.status(HttpStatus.CREATED).body(authService.register(req));
+    }
+    @PostMapping("/login")
+    public LoginResponse login(@Valid @RequestBody LoginRequest req) {
+        return authService.login(req);
     }
 }
