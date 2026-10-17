@@ -2,6 +2,7 @@ package com.axionix.team_task_tracker.service;
 
 import com.axionix.team_task_tracker.dto.*;
 import com.axionix.team_task_tracker.entity.*;
+import com.axionix.team_task_tracker.exception.ApiException;
 import com.axionix.team_task_tracker.repository.ProjectRepository;
 import com.axionix.team_task_tracker.repository.TaskRepository;
 import com.axionix.team_task_tracker.repository.TaskSpecifications;
@@ -36,8 +37,8 @@ public class TaskService {
     @Transactional
     public TaskResponse create(Long projectId, CreateTaskRequest req, User currentUser) {
         Project project = projectRepository.findById(projectId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Project not found"
+                .orElseThrow(() -> new ApiException(
+                        HttpStatus.NOT_FOUND,"PROJECT_NOT_FOUND", "Project not found"
                 ));
         requireMember(projectId, currentUser);
         validateDueDate(req.dueDate());
@@ -62,7 +63,7 @@ public class TaskService {
 
         if (req.title() != null) {
             if (req.title().isBlank()) {
-                throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Title cannot be blank");
+                throw new ApiException(HttpStatus.BAD_REQUEST,"VALIDATION_ERROR", "Title cannot be blank");
             }
             task.setTitle(req.title().trim());
         }
@@ -86,7 +87,7 @@ public class TaskService {
         boolean isCreator = task.getCreatedBy().getId().equals(currentUser.getId());
 
         if (!isCreator && !isOwner) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
+            throw new ApiException(HttpStatus.FORBIDDEN,"DELETE_NOT_ALLOWED",
                     "Only the project owner or the task creator can delete the task");
         }
         taskRepository.delete(task);
@@ -107,30 +108,30 @@ public class TaskService {
     private User resolveAssignee(Long projectId, Long assigneeId) {
         if (assigneeId == null) return null;
         if (!projectRepository.existsByIdAndMembers_Id(projectId, assigneeId)) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+            throw new ApiException(HttpStatus.BAD_REQUEST,"NOT_A_MEMBER",
                     "Assignee must be a member of the project");
         }
         return userRepository.findById(assigneeId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.BAD_REQUEST, "Assingee not found"));
+                .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST,"INVALID_ASSIGNEE" ,"Assingee not found"));
     }
 
     private void validateDueDate(LocalDateTime dueDate) {
         if (dueDate.isBefore(LocalDateTime.now())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+            throw new ApiException(HttpStatus.BAD_REQUEST,"INVALID_DUE_DATE",
                     "Due date cannot be in the past");
         }
     }
 
     private Task findTask(Long taskId) {
         return taskRepository.findById(taskId)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND
+                .orElseThrow(() -> new ApiException(HttpStatus.NOT_FOUND,"TASK_NOT_FOUND"
                         , " Task Not Found"));
     }
 
     private void requireMember(Long projectId, User user) {
         if (!projectRepository.existsByIdAndMembers_Id(projectId, user.getId())) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN,
-                    "You are not member of this project");
+            throw new ApiException(HttpStatus.FORBIDDEN,
+                    "NOT_A_MEMBER","You are not member of this project");
         }
     }
 
@@ -147,24 +148,24 @@ public class TaskService {
         requireProjectAccess(projectId, currentUser);
 
         if (page < 0 || size < 1 || size > MAX_PAGE_SIZE) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+            throw new ApiException(HttpStatus.BAD_REQUEST,"INVALID_PAGINATION",
                     "page must be >= 0 and size must be between 1 and " + MAX_PAGE_SIZE);
         }
         String field = SORT_FIELDS.get(sortBy);
         if (field == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+            throw new ApiException(HttpStatus.BAD_REQUEST,"INVALID_SORT",
                     "sortBy must be created_ar or due_date");
         }
         Sort.Direction dir;
         try {
             dir = Sort.Direction.fromString(direction);
         } catch (IllegalArgumentException e) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+            throw new ApiException(HttpStatus.BAD_REQUEST,"INVALID_SORT",
                     "direction must be asc or desc");
         }
         if (filter.dueFrom() != null && filter.dueTo() != null
                 && filter.dueFrom().isAfter(filter.dueTo())) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST,
+            throw new ApiException(HttpStatus.BAD_REQUEST,"INVALID_DATE_RANGE",
                     "dueFrom must not be after dueTo");
         }
         Pageable pageable = PageRequest.of(page, size,
@@ -212,7 +213,7 @@ public class TaskService {
     }
     private void requireProjectAccess(Long projectId, User user) {
         if (!projectRepository.existsById(projectId)) {
-            throw new ResponseStatusException(HttpStatus.NOT_FOUND, "Project not found");
+            throw new ApiException(HttpStatus.NOT_FOUND,"PROJECT_NOT_FOUND", "Project not found");
         }
         requireMember(projectId, user);
     }

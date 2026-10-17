@@ -18,6 +18,7 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 @RequiredArgsConstructor
 public class SecurityConfig {
     private final JwtAuthFilter jwtAuthFilter;
+    private final RestAuthenticationEntryPoint restAuthenticationEntryPoint;
     @Bean
     public PasswordEncoder passwordEncoder(){
         return new BCryptPasswordEncoder();
@@ -34,8 +35,8 @@ public class SecurityConfig {
                         .requestMatchers("/auth/**","/error",
                                 "/swagger-ui/**","/swagger-ui,html","/v3/api-docs/**").permitAll()
                         .anyRequest().authenticated())
-                .exceptionHandling(e->e
-                        .authenticationEntryPoint(new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+                .exceptionHandling(e ->
+                        e.authenticationEntryPoint(restAuthenticationEntryPoint))
                 .addFilterBefore(jwtAuthFilter, UsernamePasswordAuthenticationFilter.class);
         return http.build();
     }

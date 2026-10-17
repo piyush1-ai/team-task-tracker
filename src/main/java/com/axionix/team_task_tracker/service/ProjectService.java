@@ -3,6 +3,7 @@ package com.axionix.team_task_tracker.service;
 import com.axionix.team_task_tracker.dto.*;
 import com.axionix.team_task_tracker.entity.Project;
 import com.axionix.team_task_tracker.entity.User;
+import com.axionix.team_task_tracker.exception.ApiException;
 import com.axionix.team_task_tracker.repository.ProjectRepository;
 import com.axionix.team_task_tracker.repository.UserRepository;
 import lombok.RequiredArgsConstructor;
@@ -48,11 +49,11 @@ public class ProjectService {
         requireOwner(project, currentUser);
 
         User newMember = userRepository.findByEmail(req.email().trim().toLowerCase())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "No registered user with that email"
+                .orElseThrow(() -> new ApiException(
+                        HttpStatus.NOT_FOUND, "USER_NOT_FOUND","No registered user with that email"
                 ));
         if (!project.getMembers().add(newMember)) {
-            throw new ResponseStatusException(HttpStatus.CONFLICT, "User is already a member");
+            throw new ApiException(HttpStatus.CONFLICT,"ALREADY_A_MEMBER", "User is already a member");
         }
         return toDetail(projectRepository.save(project));
     }
@@ -67,18 +68,18 @@ public class ProjectService {
     // -------------helper functions ----------------
     private Project findProject(Long projectId) {
         return projectRepository.findById(projectId)
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Project not found"
+                .orElseThrow(() -> new ApiException(
+                        HttpStatus.NOT_FOUND,"PROJECT_NOT_FOUND", "Project not found"
                 ));
 
     }
     private void requireMember(Long projectId , User user){
         if (!projectRepository.existsByIdAndMembers_Id(projectId,user.getId()))
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, " You are not a member of this project");
+            throw new ApiException(HttpStatus.FORBIDDEN,"NOT_A_MEMBER", " You are not a member of this project");
     }
     private void requireOwner(Project project , User user){
         if (!project.getOwner().getId().equals(user.getId())){
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN,"Only the owner can do this");
+            throw new ApiException(HttpStatus.FORBIDDEN,"NOT_PROJECT_OWNER","Only the owner can do this");
         }
     }
     private ProjectResponse toResponse(Project p){
