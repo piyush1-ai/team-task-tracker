@@ -40,24 +40,23 @@ public class TaskController {
         return ResponseEntity.noContent().build();
     }
 
-    @GetMapping("/project/{projectId}/tasks")
+    @GetMapping("/projects/{projectId}/tasks")
     public PageResponse<TaskResponse> list(
-            @PathVariable Long projectId,
-            @RequestParam(required = false)Status status,
-            @RequestParam(required = false)Priority priority,
-            @RequestParam(required = false) Long assigneeId,
-            @RequestParam(required = false)
-                @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME)LocalDateTime dueFrom,
-            @RequestParam(required = false)
-                @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime dueTO,
-            @RequestParam(defaultValue = "0")int page,
-            @RequestParam(defaultValue = "10") int size,
-            @RequestParam(defaultValue = "created_at") String sortBy,
-            @RequestParam(defaultValue = "desc") String direction,
-            @AuthenticationPrincipal User user
-            ){
-        TaskFilter filter = new TaskFilter(status , priority , assigneeId , dueFrom,dueTO);
-        return taskService.list(projectId,filter,page,size,sortBy,direction,user);
+            @PathVariable("projectId") Long projectId,
+            @RequestParam(name = "status", required = false) Status status,
+            @RequestParam(name = "priority", required = false) Priority priority,
+            @RequestParam(name = "assigneeId", required = false) Long assigneeId,
+            @RequestParam(name = "dueFrom", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime dueFrom,
+            @RequestParam(name = "dueTo", required = false)
+            @DateTimeFormat(iso = DateTimeFormat.ISO.DATE_TIME) LocalDateTime dueTo,
+            @RequestParam(name = "page", defaultValue = "0") int page,
+            @RequestParam(name = "size", defaultValue = "10") int size,
+            @RequestParam(name = "sortBy", defaultValue = "created_at") String sortBy,
+            @RequestParam(name = "direction", defaultValue = "desc") String direction,
+            @AuthenticationPrincipal User user) {
+        TaskFilter filter = new TaskFilter(status, priority, assigneeId, dueFrom, dueTo);
+        return taskService.list(projectId, filter, page, size, sortBy, direction, user);
     }
 
     @GetMapping("/projects/{projectId}/summary")

@@ -108,11 +108,12 @@ public class TaskService {
     private User resolveAssignee(Long projectId, Long assigneeId) {
         if (assigneeId == null) return null;
         if (!projectRepository.existsByIdAndMembers_Id(projectId, assigneeId)) {
-            throw new ApiException(HttpStatus.BAD_REQUEST,"NOT_A_MEMBER",
+            throw new ApiException(HttpStatus.BAD_REQUEST, "INVALID_ASSIGNEE",
                     "Assignee must be a member of the project");
         }
         return userRepository.findById(assigneeId)
-                .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST,"INVALID_ASSIGNEE" ,"Assingee not found"));
+                .orElseThrow(() -> new ApiException(HttpStatus.BAD_REQUEST, "INVALID_ASSIGNEE",
+                        "Assignee not found"));
     }
 
     private void validateDueDate(LocalDateTime dueDate) {
